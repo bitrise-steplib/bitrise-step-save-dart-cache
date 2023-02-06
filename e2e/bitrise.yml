@@ -11,7 +11,6 @@ workflows:
   test_dart:
     envs:
     - TEST_APP_URL: https://github.com/robertodoering/harpy.git
-    - BRANCH: master
     - COMMIT: 8f66175
     - FLUTTER_VERSION: 3.7.1
     before_run:
