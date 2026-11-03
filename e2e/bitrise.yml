@@ -25,6 +25,15 @@ workflows:
         - content: |-
             set -ex
             flutter pub get
+    - script:
+        title: Ensure pub cache readable (SVC-4102 workaround on dockerless Linux)
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -e
+            if [ -d "$HOME/.pub-cache" ]; then
+              chmod -R u+rwX "$HOME/.pub-cache" 2>/dev/null || sudo chmod -R u+rwX "$HOME/.pub-cache" 2>/dev/null || true
+            fi
     - path::./:
         title: Execute step
         run_if: "true"
