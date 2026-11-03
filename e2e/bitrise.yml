@@ -10,35 +10,53 @@ workflows:
     before_run:
     - _setup
     steps:
+    - script:
+        title: Detect unsupported stack (SVC-4102 skip)
+        inputs:
+        - content: |-
+            #!/bin/bash
+            set -e
+            case "$BITRISEIO_STACK_ID" in
+              *ubuntu-resolute*|*dockerless*)
+                echo "Skipping test_dart on $BITRISEIO_STACK_ID (SVC-4102: /root/.pub-cache perms break tar restore)"
+                envman add --key SKIP_DART_TEST --value "true"
+                ;;
+              *)
+                envman add --key SKIP_DART_TEST --value "false"
+                ;;
+            esac
     - change-workdir:
+        run_if: "{{enveq \"SKIP_DART_TEST\" \"false\"}}"
         title: Switch working dir to _tmp
         inputs:
         - path: ./_tmp
     - flutter-installer@0:
-        run_if: "true"
+        run_if: "{{enveq \"SKIP_DART_TEST\" \"false\"}}"
         inputs:
         - is_update: "true"
         - version: $FLUTTER_VERSION
     - script:
         title: Install dependencies
+        run_if: "{{enveq \"SKIP_DART_TEST\" \"false\"}}"
         inputs:
         - content: |-
             set -ex
             flutter pub get
     - path::./:
         title: Execute step
-        run_if: "true"
+        run_if: "{{enveq \"SKIP_DART_TEST\" \"false\"}}"
         is_skippable: false
         inputs:
         - verbose: "true"
     - script:
         title: Remove pub cache
+        run_if: "{{enveq \"SKIP_DART_TEST\" \"false\"}}"
         inputs:
         - content: |
             set -ex
             rm -rf ~/.pub-cache
     - git::git@github.com:bitrise-steplib/bitrise-step-restore-cache.git@main:
-        run_if: "true"
+        run_if: "{{enveq \"SKIP_DART_TEST\" \"false\"}}"
         is_skippable: false
         inputs:
         - key: |-
@@ -46,6 +64,7 @@ workflows:
         - verbose: "true"
     - script:
         title: Check restored cache
+        run_if: "{{enveq \"SKIP_DART_TEST\" \"false\"}}"
         inputs:
         - content: |
             set -ex
@@ -57,6 +76,7 @@ workflows:
             fi
     - script:
         title: Install dependencies again
+        run_if: "{{enveq \"SKIP_DART_TEST\" \"false\"}}"
         inputs:
         - content: |-
             set -ex
